@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+**/xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Raw Telegram export (lecture PDFs are copied into HSEClient/Sources/Resources/Lectures)
+Lecture_notes/
+
+# Swift Package Manager / Carthage / Pods (unused here, just in case)
+.build/
+.swiftpm/
+Pods/
+Carthage/Build/
+HSEClient.xcodeproj/
