@@ -26,3 +26,10 @@ HSEClient.xcodeproj/
 # Built artifacts
 *.dmg
 HSEClient/build/
+
+# Android
+android/.gradle/
+android/.kotlin/
+android/local.properties
+android/.idea/
+*.apk

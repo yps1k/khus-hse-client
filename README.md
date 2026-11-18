@@ -8,6 +8,16 @@ SwiftUI + Liquid Glass (macOS 26), с входом через OAuth2/PKCE акк
 > приложения HSE App X (`api.hseapp.ru`), полученный реверс-инжинирингом.
 > Только для личного использования.
 
+## Скачать
+
+Готовые сборки — во вкладке **[Releases](https://github.com/yps1k/khus-hse-client/releases/latest)**:
+
+| Платформа | Файл | Требования |
+|---|---|---|
+| macOS | `Khus-HSE-Client.dmg` | macOS 26 |
+| Android | `Khus-HSE-Client.apk` | Android 8.0+ (разрешить установку из неизвестных источников) |
+| Web | папка [`web/`](web/) | любой современный браузер |
+
 ## Возможности
 
 | Раздел | Что делает |
@@ -47,6 +57,17 @@ open HSEClient.xcodeproj        # Xcode → схема HSEClient, My Mac → ⌘
 
 Apple ID не требуется: подпись «Sign to Run Locally». При первом запуске один раз
 разреши доступ к Keychain.
+
+### Android
+
+Нативное приложение: Kotlin + Jetpack Compose + Material 3. Конспекты берутся
+из той же папки `HSEClient/Sources/Resources/Lectures` (просмотр через `PdfRenderer`).
+
+```bash
+cd android
+JAVA_HOME=/opt/homebrew/opt/openjdk@21 ./gradlew :app:assembleDebug
+# → android/app/build/outputs/apk/debug/app-debug.apk
+```
 
 ## Документация API
 
