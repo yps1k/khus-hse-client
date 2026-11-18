@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Khus HSE Client</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%231E53D8'/%3E%3Cpath fill='%23fff' d='M12 5 3 9.5l9 4.5 7-3.5V15h1.5V9.5L12 5zM6 13.1V16c0 1.3 2.7 2.4 6 2.4s6-1.1 6-2.4v-2.9l-6 3-6-3z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: fixed glass sidebar + scrolling content; tinted gradient ground so glass refracts. */
+:root{
+  --accent:#1E53D8; --accent-2:#062A86;
+  --bg:#eef2fb; --bg2:#dfe7fb;
+  --fg:#101422; --muted:#5b6478; --faint:#8a92a6;
+  --card:rgba(255,255,255,.55); --card-brd:rgba(255,255,255,.65);
+  --glass:rgba(255,255,255,.45); --line:rgba(20,30,60,.10);
+  --shadow:0 8px 30px rgba(20,40,90,.10);
+  --radius:18px; --sans:'Inter',system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1020; --bg2:#0e1733; --fg:#eef1f8; --muted:#9aa3bd; --faint:#6b7490;
+  --card:rgba(30,40,70,.45); --card-brd:rgba(120,140,200,.18);
+  --glass:rgba(30,42,78,.5); --line:rgba(150,170,220,.14);
+  --shadow:0 10px 34px rgba(0,0,0,.4); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0b1020; --bg2:#0e1733; --fg:#eef1f8; --muted:#9aa3bd; --faint:#6b7490;
+  --card:rgba(30,40,70,.45); --card-brd:rgba(120,140,200,.18);
+  --glass:rgba(30,42,78,.5); --line:rgba(150,170,220,.14);
+  --shadow:0 10px 34px rgba(0,0,0,.4); color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;font-family:var(--sans);color:var(--fg);
+  background:
+    radial-gradient(1200px 700px at 110% -10%, color-mix(in srgb,var(--accent) 24%,transparent), transparent 60%),
+    linear-gradient(160deg,var(--bg),var(--bg2));
+  background-attachment:fixed;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+a{color:var(--accent);text-decoration:none}
+.glass{background:var(--card);backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);
+  border:1px solid var(--card-brd);border-radius:var(--radius);box-shadow:var(--shadow)}
+.pill{display:inline-block;font-weight:600;font-size:.82rem;padding:5px 12px;border-radius:999px;
+  background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--fg)}
+
+/* ---- app shell ---- */
+#app{display:flex;min-height:100%}
+#sidebar{width:230px;flex:0 0 230px;padding:16px 12px;display:flex;flex-direction:column;gap:6px;
+  position:sticky;top:0;height:100vh;overflow:auto}
+.avatarbtn{align-self:center;margin:8px 0 10px}
+.avatarbtn img,.avatarbtn .ph{width:60px;height:60px;border-radius:50%;object-fit:cover;
+  border:2.5px solid var(--accent);display:grid;place-items:center;background:var(--glass);font-weight:700}
+.navitem{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:13px;font-weight:600;color:var(--fg);width:100%;text-align:left}
+.navitem:hover{background:var(--glass)}
+.navitem.active{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.navitem .ic{width:20px;text-align:center;opacity:.9}
+.sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:8px;align-items:center;padding-top:10px}
+.copyr{font-size:.68rem;color:var(--faint)}
+#content{flex:1;min-width:0;padding:22px;max-width:980px}
+h1.page{font-size:1.5rem;font-weight:800;margin:.1rem 0 1rem;letter-spacing:-.01em}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.btn{padding:9px 16px;border-radius:12px;font-weight:600;background:var(--glass);border:1px solid var(--card-brd)}
+.btn.primary{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:none;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 40%,transparent)}
+.btn.sm{padding:6px 11px;font-size:.84rem;border-radius:10px}
+.card{padding:14px;margin-bottom:11px}
+.row{display:flex;gap:12px;align-items:flex-start}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+.cap{font-size:.84rem} .mono{font-variant-numeric:tabular-nums}
+.sec-title{font-weight:700;margin:16px 0 8px}
+.empty{color:var(--muted);text-align:center;padding:50px 10px}
+.spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;
+  animation:spin .8s linear infinite;margin:50px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.seg{display:inline-flex;background:var(--glass);border:1px solid var(--card-brd);border-radius:12px;padding:3px}
+.seg button{padding:7px 14px;border-radius:9px;font-weight:600;font-size:.88rem;color:var(--muted)}
+.seg button.on{background:var(--accent);color:#fff}
+input,select{font:inherit;color:var(--fg);background:var(--glass);border:1px solid var(--card-brd);border-radius:12px;padding:10px 12px;outline:none;width:100%}
+input::placeholder{color:var(--faint)}
+.bar{width:4px;align-self:stretch;border-radius:3px;background:var(--accent)}
+.now{outline:2px solid var(--accent);outline-offset:0}
+.badge-now{font-size:.64rem;font-weight:800;background:var(--accent);color:#fff;padding:2px 7px;border-radius:999px;margin-left:8px;text-transform:uppercase}
+.teacher{color:var(--accent);font-weight:600;cursor:pointer}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:.88rem;padding:3px 0}
+.kv .k{color:var(--muted)}
+#login{min-height:100%;display:grid;place-items:center;padding:30px}
+.loginbox{text-align:center;padding:40px 36px;max-width:420px}
+.cap-ico{width:76px;height:76px;border-radius:22px;margin:0 auto 18px;display:grid;place-items:center;
+  background:linear-gradient(180deg,var(--accent),var(--accent-2));box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 45%,transparent)}
+.link-list a{display:block;padding:6px 0}
+.rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.modal{position:fixed;inset:0;background:rgba(5,10,25,.45);display:grid;place-items:center;z-index:50;padding:16px}
+.modal .glass{max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:22px}
+@media (max-width:760px){
+  #app{flex-direction:column}
+  #sidebar{
+    position:sticky;top:0;z-index:20;width:auto;height:auto;flex:0 0 auto;
+    flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px;
+    border-radius:0 0 var(--radius) var(--radius);
+    padding:10px max(14px,env(safe-area-inset-left,0px)) 10px max(14px,env(safe-area-inset-right,0px))}
+  .avatarbtn{order:1;margin:0;flex:0 0 auto}
+  .avatarbtn img,.avatarbtn .ph{width:40px;height:40px;border-width:2px}
+  .sidefoot{order:2;margin:0 0 0 auto;flex-direction:row;align-items:center;gap:8px;flex:0 0 auto;padding:0}
+  .copyr{display:none}
+  #navItems{order:3;flex:1 1 100%;display:flex;flex-direction:row;flex-wrap:nowrap;gap:8px;
+    overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  #navItems::-webkit-scrollbar{display:none}
+  .navitem{flex:0 0 auto;width:auto;padding:8px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--card-brd)}
+  .navitem.active{background:var(--accent);color:#fff}
+  #content{padding:16px;max-width:none;
+    padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  h1.page{font-size:1.3rem}
+  .copyr-m{display:block;text-align:center;color:var(--faint);font-size:.68rem;padding:14px 0 4px}
+}
+.copyr-m{display:none}
+</style>
+</head>
+<body>
+<div id="login" hidden>
+  <div class="glass loginbox">
+    <div class="cap-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="#fff"><path d="M12 3 1 9l11 6 9-4.9V17h2V9L12 3zM5 13.2V17c0 1.6 3.1 3 7 3s7-1.4 7-3v-3.8l-7 3.8-7-3.8z"/></svg></div>
+    <h2 style="margin:.2rem 0;font-size:1.6rem;font-weight:800">Khus HSE Client</h2>
+    <div class="muted" style="margin-bottom:22px">Неофициальный веб-клиент HSE App X</div>
+    <button class="btn primary" id="loginBtn" style="width:100%;padding:12px">Войти через ВШЭ</button>
+    <div id="loginErr" class="cap" style="color:#e5484d;margin-top:14px"></div>
+    <div class="faint cap" style="margin-top:18px">Вход через саму ВШЭ (saml.hse.ru). Токен хранится только в этом браузере.</div>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <nav id="sidebar" class="glass" style="border-radius:0 var(--radius) var(--radius) 0">
+    <button class="avatarbtn" data-tab="profile" title="Профиль"><span class="ph" id="navAvatar">—</span></button>
+    <div id="navItems"></div>
+    <div class="sidefoot">
+      <button class="btn sm" id="themeBtn">🌓 Тема</button>
+      <button class="btn sm" id="logoutBtn">Выйти</button>
+      <div class="copyr">Yan Khus · All Rights Reserved</div>
+    </div>
+  </nav>
+  <main id="content"><div class="spinner"></div></main>
+</div>
+
+<div id="modalHost"></div>
+
+<script>
+"use strict";
+/* ============ config (reverse-engineered from HSE App X) ============ */
+const KC = "https://saml.hse.ru/realms/hse/protocol/openid-connect";
+const CLIENT_ID = "app-x-android";
+const SCOPE = "profile email";
+const API = "https://api.hseapp.ru";
+const REDIRECT = location.origin + location.pathname;  // this page
+const LS = { tok:"khs.tokens" };
+
+/* ============ small utils ============ */
+const $ = (s,r=document)=>r.querySelector(s);
+const el = (t,p={},...k)=>{const e=document.createElement(t);for(const[a,v]of Object.entries(p)){
+  if(a==="class")e.className=v;else if(a==="html")e.innerHTML=v;else if(a.startsWith("on"))e.addEventListener(a.slice(2),v);else if(v!=null)e.setAttribute(a,v);}
+  for(const c of k.flat())if(c!=null)e.append(c.nodeType?c:document.createTextNode(c));return e;};
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+async function sha256(s){return b64url(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)));}
+function rand(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return b64url(a);}
+function store(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function load(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}}
+const MSK = {timeZone:"Europe/Moscow"};
+const fmtTime = d => new Intl.DateTimeFormat("ru-RU",{...MSK,hour:"2-digit",minute:"2-digit"}).format(d);
+const fmtDay  = d => new Intl.DateTimeFormat("ru-RU",{...MSK,weekday:"long",day:"numeric",month:"long"}).format(d);
+const fmtDate = d => new Intl.DateTimeFormat("ru-RU",{...MSK,day:"numeric",month:"short"}).format(d);
+const isoDay  = d => new Intl.DateTimeFormat("en-CA",{...MSK,year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
+
+/* ============ auth ============ */
+let tokens = load(LS.tok);
+let refreshing = null;
+
+async function startLogin(){
+  const verifier = rand(48), challenge = await sha256(verifier), state = rand(16);
+  sessionStorage.setItem("khs.pkce", JSON.stringify({verifier,state}));
+  const u = new URL(KC+"/auth");
+  u.search = new URLSearchParams({client_id:CLIENT_ID,redirect_uri:REDIRECT,response_type:"code",
+    scope:SCOPE,state,code_challenge:challenge,code_challenge_method:"S256"});
+  location.href = u.toString();
+}
+async function handleRedirect(){
+  const q = new URLSearchParams(location.search);
+  if(q.get("error")) throw new Error(q.get("error_description")||q.get("error"));
+  const saved = JSON.parse(sessionStorage.getItem("khs.pkce")||"{}");
+  sessionStorage.removeItem("khs.pkce");
+  history.replaceState({},"",REDIRECT);
+  if(!saved.verifier) throw new Error("данные входа не найдены — нажмите «Войти» ещё раз");
+  if(q.get("state")!==saved.state) throw new Error("сессия входа устарела — нажмите «Войти» ещё раз");
+  await tokenReq({grant_type:"authorization_code",code:q.get("code"),redirect_uri:REDIRECT,code_verifier:saved.verifier});
+}
+function stat(m){const e=$("#loginErr");if(e){e.style.color="var(--muted)";e.textContent=m;}}
+async function fetchT(url,opts={},ms=15000){
+  const ctl=new AbortController();const id=setTimeout(()=>ctl.abort(),ms);
+  try{ return await fetch(url,{...opts,signal:ctl.signal}); }
+  catch(e){ if(e.name==="AbortError")throw new Error("таймаут сети ("+url.split("/")[2]+")"); throw e; }
+  finally{ clearTimeout(id); }
+}
+async function tokenReq(form){
+  const body = new URLSearchParams({...form,client_id:CLIENT_ID});
+  const r = await fetchT(KC+"/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+  const data = await r.json().catch(()=>({}));
+  if(r.status===400||r.status===401){ tokens=null; store(LS.tok,null); throw new Error(data.error||"invalid_grant"); }
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  tokens = {access:data.access_token, refresh:data.refresh_token, exp:Date.now()+(data.expires_in||300)*1000};
+  store(LS.tok,tokens);
+}
+async function validToken(){
+  if(!tokens) throw new Error("not logged in");
+  if(Date.now() > tokens.exp-60000){
+    if(!refreshing) refreshing = tokenReq({grant_type:"refresh_token",refresh_token:tokens.refresh}).finally(()=>refreshing=null);
+    await refreshing;
+  }
+  return tokens.access;
+}
+function logout(){ tokens=null; store(LS.tok,null); location.reload(); }
+function loginError(m){ const e=$("#loginErr"); if(e)e.textContent=m; }
+
+/* ============ api ============ */
+async function api(path, ver="/v3/", opts={}){
+  let tk = await validToken();
+  const mk = t => fetchT(API+ver+path,{method:opts.method||"GET",
+    headers:{Authorization:"Bearer "+t,"Accept-Language":"ru",...(opts.body?{"Content-Type":"application/json"}:{})},
+    body:opts.body?JSON.stringify(opts.body):undefined});
+  let r = await mk(tk);
+  if(r.status===401){ await tokenReq({grant_type:"refresh_token",refresh_token:tokens.refresh}); r = await mk(await validToken()); }
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return r.status===204?null:r.json();
+}
+
+/* ============ data helpers ============ */
+const startOfWeek = d => { const x=new Date(d); const day=(x.getDay()+6)%7; x.setHours(0,0,0,0); x.setDate(x.getDate()-day); return x; };
+async function timetable(start,end,extra=""){ return api(`ruz/lessons?start=${isoDay(start)}&end=${isoDay(end)}${extra}`); }
+
+/* ============ UI shell ============ */
+const TABS = [
+  ["schedule","Расписание","🗓"],["search","Поиск","🔍"],["grades","Оценки","🔢"],
+  ["deadlines","Дедлайны","✓"],["notifications","Уведомления","🔔"],["info","Полезная информация","💡"],
+  ["lectures","Конспекты лекций","📄"],["food","Столовые","🍴"],["profile","Профиль","👤"]
+];
+function buildNav(){
+  const box=$("#navItems"); box.innerHTML="";
+  for(const [id,name,ic] of TABS){
+    if(id==="profile") continue;
+    box.append(el("button",{class:"navitem","data-tab":id,onclick:()=>go(id)}, el("span",{class:"ic"},ic), name));
+  }
+}
+let current=null;
+function go(tab){
+  current=tab;
+  document.querySelectorAll(".navitem").forEach(n=>n.classList.toggle("active",n.getAttribute("data-tab")===tab));
+  const avb=$(".avatarbtn"); if(avb) avb.style.outline = tab==="profile"?"3px solid var(--accent)":"";
+  render(tab);
+  try{location.hash=tab;}catch{}
+}
+async function render(tab){
+  const c=$("#content"); c.innerHTML="";
+  const fns={schedule:tabSchedule,search:tabSearch,grades:tabGrades,deadlines:tabDeadlines,
+    notifications:tabNotifs,info:tabInfo,lectures:tabLectures,food:tabFood,profile:tabProfile};
+  try{ await fns[tab](c); }catch(e){ c.append(el("div",{class:"empty"},"Ошибка: "+e.message)); }
+}
+function page(c,title,...nodes){ c.append(el("h1",{class:"page"},title),...nodes); }
+function spin(c){ const s=el("div",{class:"spinner"}); c.append(s); return s; }
+
+/* ============ tab: schedule ============ */
+async function tabSchedule(c, target={}, title="Расписание", roomMode=false){
+  let ws = startOfWeek(new Date());
+  const head = el("div",{class:"toolbar"});
+  const body = el("div");
+  const label = el("span",{class:"mono",style:"min-width:140px;text-align:center"});
+  const nav = (d)=>{ws=new Date(ws.getTime()+d*864e5);draw();};
+  head.append(el("button",{class:"btn sm",onclick:()=>nav(-7)},"‹"),label,
+    el("button",{class:"btn sm",onclick:()=>nav(7)},"›"),
+    el("button",{class:"btn sm",onclick:()=>{ws=startOfWeek(new Date());draw();}},"Сегодня"));
+  page(c,title,head,body);
+  async function draw(){
+    const end=new Date(ws.getTime()+6*864e5);
+    label.textContent=`${fmtDate(ws)} – ${fmtDate(end)}`;
+    body.innerHTML=""; const s=spin(body);
+    try{
+      const ex = target.email?`&email=${encodeURIComponent(target.email)}`:target.group?`&group=${target.group}`:target.auditorium?`&auditorium=${target.auditorium}`:"";
+      let list = await timetable(ws,end,ex); s.remove();
+      list.sort((a,b)=>new Date(a.date_start)-new Date(b.date_start));
+      if(!list.length){ body.append(el("div",{class:"empty"},roomMode?"Аудитория свободна всю неделю":"Нет занятий на этой неделе")); return; }
+      const byDay={}; for(const L of list){const k=isoDay(new Date(L.date_start));(byDay[k]=byDay[k]||[]).push(L);}
+      for(const k of Object.keys(byDay).sort()){
+        body.append(el("div",{class:"sec-title"},fmtDay(new Date(byDay[k][0].date_start))));
+        for(const L of byDay[k]) body.append(lessonCard(L));
+      }
+      if(roomMode) body.append(el("div",{class:"faint cap",style:"margin-top:8px"},"Показаны занятые пары — свободные интервалы это промежутки между ними."));
+    }catch(e){ s.remove(); body.append(el("div",{class:"empty"},"Ошибка: "+e.message)); }
+  }
+  draw();
+}
+function lessonCard(L){
+  const now = Date.now()>=+new Date(L.date_start) && Date.now()<=+new Date(L.date_end);
+  const times=el("div",{style:"text-align:right;min-width:48px"},
+    el("div",{style:"font-weight:700"},fmtTime(new Date(L.date_start))),
+    el("div",{class:"faint cap"},fmtTime(new Date(L.date_end))));
+  const info=el("div",{style:"flex:1;min-width:0"},
+    el("div",{style:"font-weight:600"},L.discipline||"—", now?el("span",{class:"badge-now"},"сейчас"):null),
+    L.type?el("div",{class:"cap muted"},L.type):null,
+    L.lecturer?(L.lecturer_email?el("div",{class:"teacher cap",onclick:()=>openPersonModal(L.lecturer_email,L.lecturer)},"👤 "+L.lecturer):el("div",{class:"cap muted"},"👤 "+L.lecturer)):null,
+    el("div",{class:"cap muted"},[L.auditorium,L.building].filter(Boolean).join(" · ")));
+  return el("div",{class:"glass card row "+(now?"now":"")},times,el("div",{class:"bar"}),info);
+}
+
+/* ============ tab: search ============ */
+async function tabSearch(c){
+  let kind="people";
+  const seg=el("div",{class:"seg"});
+  [["people","Люди"],["groups","Группы"],["rooms","Аудитории"]].forEach(([k,n])=>
+    seg.append(el("button",{class:k==="people"?"on":"",onclick:(e)=>{kind=k;[...seg.children].forEach(b=>b.classList.remove("on"));e.target.classList.add("on");swap();}},n)));
+  const input=el("input",{placeholder:"ФИО, группа или аудитория",onkeydown:e=>{if(e.key==="Enter")run();}});
+  const results=el("div");
+  page(c,"Поиск",seg,el("div",{style:"height:10px"}),input,el("div",{style:"height:12px"}),results);
+  function swap(){ input.placeholder = kind==="rooms"?"Номер аудитории, напр. R608":kind==="groups"?"Группа, напр. БПИ221":"ФИО студента/преподавателя"; results.innerHTML=""; }
+  async function run(){
+    const q=input.value.trim(); if(q.length<2)return;
+    results.innerHTML=""; const s=spin(results);
+    try{
+      const type = kind==="groups"?"&type=GROUP":kind==="rooms"?"&type=AUDITORIUM":"";
+      const list = await api(`dump/search?q=${encodeURIComponent(q)}${type}`);
+      s.remove();
+      if(!list.length){ results.append(el("div",{class:"empty"},"Ничего не найдено")); return; }
+      for(const r of list) results.append(resultCard(r));
+    }catch(e){ s.remove(); results.append(el("div",{class:"empty"},"Ошибка: "+e.message)); }
+  }
+}
+function resultCard(r){
+  const title = r.full_name||r.label||r.room||r.id;
+  const sub = r.type==="AUDITORIUM"?[r.auditorium_type,r.description].filter(Boolean).join(" · "):r.description;
+  const open = ()=>{
+    if(r.type==="AUDITORIUM") openSheetTimetable({auditorium:r.id},"Аудитория "+(r.room||r.id),true);
+    else if(r.type==="GROUP") openSheetTimetable({group:r.id},r.label||r.id);
+    else openPersonModal(r.email,title);
+  };
+  return el("div",{class:"glass card row",style:"cursor:pointer;align-items:center",onclick:open},
+    el("div",{style:"flex:1;min-width:0"},el("div",{style:"font-weight:600"},title),sub?el("div",{class:"cap muted"},sub):null),
+    el("span",{class:"faint"},"›"));
+}
+
+/* person profile modal */
+async function openPersonModal(email,name){
+  const host=openModal(el("div",{},el("div",{class:"spinner"})));
+  try{
+    const p = await api("dump/email/"+encodeURIComponent(email));
+    const edu=(p.education&&p.education[0])||{};
+    const year = (g=>{const m=(g||"").match(/\d/);if(!m)return edu.start_year;const d=(g.match(/\d+/)||[])[0]||"";return d.length>=2?"20"+d.slice(0,2):edu.start_year;})(edu.group_title);
+    host.replaceChildren(...[el("div",{style:"text-align:center;margin-bottom:12px"},
+        p.avatar_url?el("img",{src:p.avatar_url,style:"width:84px;height:84px;border-radius:50%;object-fit:cover"}):el("div",{class:"cap-ico",style:"width:70px;height:70px;border-radius:50%"}," "),
+        el("h2",{style:"margin:10px 0 2px"},p.full_name||name),
+        el("div",{class:"pill"},p.type==="STAFF"?"Сотрудник":"Студент"),
+        el("div",{class:"cap muted copybtn",style:"margin-top:8px;cursor:pointer",onclick:()=>copy(email)},"✉ "+email)),
+      p.staff_positions&&p.staff_positions.length?card("Должности",p.staff_positions.map(x=>el("div",{class:"cap"},[x.title,x.department].filter(Boolean).join(" · ")))):null,
+      edu.program_title?card("Обучение",[kv("Программа",edu.program_title),kv("Факультет",edu.faculty_title),kv("Год поступления",year)]):null,
+      el("button",{class:"btn primary",style:"width:100%;margin-top:8px",onclick:()=>{closeModal();openSheetTimetable({email},p.full_name||name);}},"Расписание")].filter(Boolean));
+  }catch(e){ host.replaceChildren(el("div",{class:"empty"},"Профиль недоступен: "+e.message)); }
+}
+function openSheetTimetable(target,title,roomMode){ const host=openModal(el("div")); tabScheduleInto(host,target,title,roomMode); }
+async function tabScheduleInto(host,target,title,roomMode){ const wrap=el("div"); host.replaceChildren(wrap); await tabSchedule(wrap,target,title,roomMode); }
+
+/* ============ tab: grades ============ */
+async function tabGrades(c){
+  let t="final";
+  const seg=el("div",{class:"seg"}); const area=el("div");
+  [["vedomosti","Ведомости"],["final","Итоговые оценки"]].forEach(([k,n])=>
+    seg.append(el("button",{class:k==="final"?"on":"",onclick:(e)=>{t=k;[...seg.children].forEach(b=>b.classList.remove("on"));e.target.classList.add("on");draw();}},n)));
+  page(c,"Оценки",seg,el("div",{style:"height:12px"}),area);
+  async function draw(){ area.innerHTML=""; if(t==="final")await final(); else vedom(); }
+  async function final(){
+    const s=spin(area);
+    try{ const r=await api("grades","/v2/"); s.remove();
+      if(r.selected_academic_year)area.append(el("div",{class:"pill",style:"margin-bottom:10px"},"Учебный год "+r.selected_academic_year));
+      if(!r.items||!r.items.length){area.append(el("div",{class:"empty"},"Оценок нет"));return;}
+      for(const g of r.items)area.append(el("div",{class:"glass card"},
+        el("div",{style:"font-weight:600"},g.discipline),
+        el("div",{class:"cap muted"},[g.type_raw,g.module_name,g.credits!=null?g.credits+" кр.":null].filter(Boolean).join(" · "))));
+    }catch(e){s.remove();area.append(el("div",{class:"empty"},"Ошибка: "+e.message));}
+  }
+  function vedom(){ area.append(el("div",{class:"glass card"},
+    el("div",{style:"font-weight:600;margin-bottom:6px"},"Ведомости"),
+    el("div",{class:"cap muted"},"Добавление Google-таблиц и пуши при обновлении есть в десктоп-версии. В вебе можно открыть таблицу-ведомость по ссылке у преподавателя."))); }
+  draw();
+}
+
+/* ============ tab: deadlines ============ */
+async function tabDeadlines(c){
+  page(c,"Дедлайны"); const s=spin(c);
+  try{ const r=await api("deadlines","/v2/",{method:"POST",body:{is_completed:false}}); s.remove();
+    const items=(r.items||[]).sort((a,b)=>new Date(a.expires_at||0)-new Date(b.expires_at||0));
+    if(!items.length){c.append(el("div",{class:"empty"},"Активных дедлайнов нет"));return;}
+    for(const d of items){ const due=d.expires_at?new Date(d.expires_at):null; const over=due&&due<new Date();
+      c.append(el("div",{class:"glass card row",style:"align-items:center"},el("span",{style:"color:var(--accent)"},"○"),
+        el("div",{},el("div",{style:"font-weight:600"},d.title),
+          due?el("div",{class:"cap "+(over?"":"muted"),style:over?"color:#e5484d":""},"до "+new Intl.DateTimeFormat("ru-RU",{...MSK,day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}).format(due)):null)));
+    }
+  }catch(e){s.remove();c.append(el("div",{class:"empty"},"Ошибка: "+e.message));}
+}
+
+/* ============ tab: notifications ============ */
+async function tabNotifs(c){
+  page(c,"Уведомления"); const s=spin(c);
+  try{ const r=await api("notifications/feed","/v2/"); s.remove();
+    const items=r.items||[]; if(!items.length){c.append(el("div",{class:"empty"},"Уведомлений нет"));return;}
+    for(const n of items)c.append(el("div",{class:"glass card"},
+      n.title?el("div",{style:"font-weight:600"},n.title):null,
+      n.content?el("div",{class:"cap muted"},n.content):null));
+  }catch(e){s.remove();c.append(el("div",{class:"empty"},"Ошибка: "+e.message));}
+}
+
+/* ============ tab: food ============ */
+async function tabFood(c){
+  page(c,"Столовые"); const s=spin(c);
+  try{ const groups=await api("food/cafes","/"); s.remove();
+    const cafes=groups.flatMap(g=>g.cafes||[]);
+    const wd=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date().getDay()];
+    for(const cafe of cafes){ const t=(cafe.opening_hours||[]).find(h=>h.day_of_week===wd);
+      const openNow=t&&t.is_open&&t.start_time<=fmtTime(new Date())&&fmtTime(new Date())<=t.end_time;
+      c.append(el("div",{class:"glass card row",style:"align-items:center"},el("span",{style:"font-size:1.3rem"},"🍴"),
+        el("div",{style:"flex:1"},el("div",{style:"font-weight:600"},cafe.cafe_name),
+          t?el("div",{class:"cap muted"},t.is_open?`Сегодня ${t.start_time}–${t.end_time}`:"Сегодня закрыто"):null),
+        el("span",{class:"cap",style:openNow?"color:#2e9e52;font-weight:700":"color:var(--muted)"},openNow?"Открыто":"Закрыто")));
+    }
+  }catch(e){s.remove();c.append(el("div",{class:"empty"},"Ошибка: "+e.message));}
+}
+
+/* ============ tab: profile ============ */
+async function tabProfile(c){
+  page(c,"Профиль"); const s=spin(c);
+  try{ const p=await api("dump/me"); s.remove();
+    const edu=(p.education&&p.education[0])||{};
+    const year=(g=>{const d=((g||"").match(/\d+/)||[])[0]||"";return d.length>=2?"20"+d.slice(0,2):edu.start_year;})(edu.group_title);
+    if(p.avatar_url){const a=$("#navAvatar");const img=el("img",{src:p.avatar_url});a.replaceWith(el("span",{class:"ph",id:"navAvatar"},img));}
+    const head=el("div",{class:"glass card",style:"text-align:center"},
+      p.avatar_url?el("img",{src:p.avatar_url,style:"width:92px;height:92px;border-radius:50%;object-fit:cover"}):null,
+      el("h2",{style:"margin:10px 0 2px"},p.full_name),
+      el("div",{class:"cap muted copybtn",style:"cursor:pointer",onclick:()=>copy(p.email)},"✉ "+p.email+"  ⧉"),
+      p.description?el("div",{class:"pill",style:"margin-top:8px"},p.description):null);
+    c.append(...[head, edu.program_title?card("Обучение",[kv("Программа",edu.program_title),kv("Факультет",edu.faculty_title),kv("Год поступления",year)]):null].filter(Boolean));
+  }catch(e){s.remove();c.append(el("div",{class:"empty"},"Ошибка: "+e.message));}
+}
+
+/* ============ static tabs ============ */
+const INFO_POSTS = [
+  {d:"7 ноября 2026",t:"Поздравляю всех с написанием Алгебры!!!! Отдыхаем 🫶🏻"},
+  {d:"7 ноября 2026",t:"🌱 Алгебра. Распределение по аудиториям на КР 7.11: R401 — группы 261, 264-а, 265; R405 — …"},
+  {d:"30 октября 2026",t:"Поздравляю всех с окончанием первого модуля, первой сессии. Ну а теперь вновь дедлайны…"},
+  {d:"24 октября 2026",t:"КР Дискра. Распределение по аудиториям.",l:"https://docs.google.com/spreadsheets/"},
+  {d:"8 сентября 2026",t:"Выбор НИСов (до 10.09 09:00)",l:"https://forms.yandex.ru/u/6a9933f16d2d734ae50ab80a"},
+  {d:"4 сентября 2026",t:"Открылся SmartWay для выбора факультатива по английскому. ❗️НИСы не выбирать❗️",l:"https://electives.hse.ru/sw"},
+  {d:"4 сентября 2026",t:"Формула оценивания Мат.анализ, 1 семестр"},
+  {d:"3 сентября 2026",t:"Формула оценивания Алгебра, 1 семестр"},
+];
+function tabInfo(c){
+  page(c,"Полезная информация",
+    el("div",{class:"glass card row",style:"align-items:center"},el("span",{style:"font-size:1.6rem"},"✈"),
+      el("div",{style:"flex:1"},el("div",{style:"font-weight:700"},"ПИ объявления"),el("div",{class:"cap muted"},"Связь: @mrs_revival")),
+      el("a",{class:"btn sm primary",href:"https://t.me/SEgfaulltt",target:"_blank"},"Открыть канал")));
+  for(const p of INFO_POSTS)c.append(el("div",{class:"glass card"},
+    el("span",{class:"pill"},p.d),el("div",{style:"margin-top:8px"},p.t),
+    p.l?el("div",{class:"link-list",style:"margin-top:6px"},el("a",{href:p.l,target:"_blank"},"🔗 ссылка")):null));
+  c.append(el("div",{class:"faint cap",style:"text-align:center;margin-top:10px"},"By Renata Ilyasova"));
+}
+function tabLectures(c){
+  page(c,"Конспекты лекций",
+    el("div",{class:"glass card row",style:"align-items:center"},el("span",{style:"font-size:1.6rem"},"✈"),
+      el("div",{style:"flex:1"},el("div",{style:"font-weight:700"},"Маруся Конспектовна"),el("div",{class:"cap muted"},"Конспекты ФКН ПИ 26")),
+      el("a",{class:"btn sm primary",href:"https://t.me/marusya_pishet_konspecty",target:"_blank"},"Открыть канал")),
+    el("div",{class:"glass card"},el("div",{style:"font-weight:600;margin-bottom:6px"},"Конспекты (PDF) — в канале"),
+      el("div",{class:"cap muted"},"В десктоп-версии конспекты встроены с просмотром. В вебе они открываются в Telegram — нажмите «Открыть канал»: там все лекции по Алгебре, Матанализу и Дискре.")),
+    el("div",{class:"faint cap",style:"text-align:center;margin-top:10px"},"By Mariya Savonik"));
+}
+
+/* ============ shared bits ============ */
+function card(title,nodes){return el("div",{class:"glass card"},el("div",{style:"font-weight:700;margin-bottom:6px"},title),...[].concat(nodes).filter(Boolean));}
+function kv(k,v){return v?el("div",{class:"kv"},el("span",{class:"k"},k),el("span",{},v)):null;}
+async function copy(t){try{await navigator.clipboard.writeText(t);}catch{}}
+function openModal(node){const host=el("div",{class:"glass"});const bg=el("div",{class:"modal",onclick:e=>{if(e.target===bg)bg.remove();}},host);
+  host.append(el("div",{style:"text-align:right;margin-bottom:-6px"},el("button",{class:"btn sm",onclick:()=>bg.remove()},"✕")),node);
+  $("#modalHost").append(bg);return host;}
+function closeModal(){document.querySelectorAll(".modal").forEach(m=>m.remove());}
+
+/* ============ boot ============ */
+(async function boot(){
+  document.querySelector(".avatarbtn").addEventListener("click",()=>go("profile"));
+  $("#loginBtn").addEventListener("click",startLogin);
+  $("#logoutBtn").addEventListener("click",logout);
+  $("#themeBtn").addEventListener("click",()=>{const r=document.documentElement;
+    const cur=r.getAttribute("data-theme")|| (matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+    const nx=cur==="dark"?"light":"dark";r.setAttribute("data-theme",nx);store("khs.theme",nx);});
+  const th=load("khs.theme"); if(th)document.documentElement.setAttribute("data-theme",th);
+
+  const hasCode = new URLSearchParams(location.search).get("code");
+  if(hasCode){
+    $("#login").hidden=false; $("#loginBtn").hidden=true;
+    const e=$("#loginErr"); e.style.color="var(--muted)"; e.textContent="Завершаем вход…";
+    try{ await handleRedirect(); }
+    catch(err){ console.error(err); const e2=$("#loginErr"); e2.style.color="#e5484d"; e2.textContent="Не удалось войти: "+(err.message||err); $("#loginBtn").hidden=false; }
+  }
+  if(!crypto.subtle) loginError("Нужен https или localhost (для безопасного входа)");
+
+  if(tokens){
+    $("#login").hidden=true; $("#app").hidden=false; buildNav();
+    const start=(location.hash||"").replace("#","");
+    go(TABS.some(t=>t[0]===start)?start:"schedule");
+  }else{
+    $("#login").hidden=false; $("#loginBtn").hidden=false;
+  }
+})();
+</script>
+</body>
+</html>
