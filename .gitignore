@@ -22,3 +22,7 @@ Lecture_notes/
 Pods/
 Carthage/Build/
 HSEClient.xcodeproj/
+
+# Built artifacts
+*.dmg
+HSEClient/build/

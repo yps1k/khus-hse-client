@@ -1,34 +1,32 @@
-MIT License
+Copyright (c) 2026 Yan Khusnoyarov. All Rights Reserved.
 
-Copyright (c) 2026 Yan Khusnoyarov
+This software and its source code (the "Software") are the exclusive property
+of Yan Khusnoyarov (the "Author"). The Software is made source-available for
+viewing and reference only. It is NOT open source.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+No license or right is granted to any person or entity. In particular, without
+the Author's prior written permission, you MAY NOT:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+  * use, run, or deploy the Software or any part of it;
+  * copy, reproduce, or store the Software other than transient viewing on the
+    hosting platform;
+  * modify, adapt, translate, or create derivative works from the Software;
+  * distribute, publish, sublicense, or share the Software;
+  * sell, rent, or otherwise commercially exploit the Software, or use it to
+    provide a paid or free service to others;
+  * remove or alter this notice.
+
+Viewing the source code on a hosting platform (e.g. GitHub) does not grant any
+of the rights above. All rights not expressly granted are reserved by the
+Author.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
 
----
+Third-party content bundled with the Software (lecture notes © Mariya Savonik;
+announcements © Renata Ilyasova) remains the property of its respective
+authors and is not covered by this notice.
 
-The MIT license above covers the application's source code only. Bundled
-third-party content is NOT covered and remains the property of its authors:
-
-  * Lecture notes (HSEClient/Sources/Resources/Lectures) — © Mariya Savonik,
-    Telegram channel "Маруся Конспектовна".
-  * Announcements shown in the "Полезная информация" tab — © Renata Ilyasova,
-    Telegram channel "ПИ объявления".
-
-These are included for personal use only; redistribute them only with their
-authors' permission.
+To request permission, contact the Author.
